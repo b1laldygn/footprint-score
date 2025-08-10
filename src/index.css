@@ -8,33 +8,62 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
+    --background: 150 30% 97%;
+    --foreground: 150 15% 15%;
 
     --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
+    --card-foreground: 150 15% 15%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
+    --popover-foreground: 150 15% 15%;
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: 150 60% 35%;
+    --primary-foreground: 0 0% 98%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 150 30% 90%;
+    --secondary-foreground: 150 15% 25%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: 150 20% 94%;
+    --muted-foreground: 150 10% 50%;
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: 200 70% 45%;
+    --accent-foreground: 0 0% 98%;
 
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive: 0 75% 55%;
+    --destructive-foreground: 0 0% 98%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: 150 20% 88%;
+    --input: 150 15% 93%;
+    --ring: 150 60% 35%;
+
+    /* Custom environmental theme colors */
+    --earth: 30 40% 60%;
+    --earth-foreground: 0 0% 98%;
+    
+    --forest: 150 80% 25%;
+    --forest-foreground: 0 0% 98%;
+    
+    --ocean: 200 80% 45%;
+    --ocean-foreground: 0 0% 98%;
+    
+    --sky: 210 100% 85%;
+    --sky-foreground: 150 15% 15%;
+    
+    --leaf: 120 60% 50%;
+    --leaf-foreground: 0 0% 98%;
+
+    /* Gradients */
+    --gradient-earth: linear-gradient(135deg, hsl(var(--earth)), hsl(var(--forest)));
+    --gradient-nature: linear-gradient(180deg, hsl(var(--sky)), hsl(var(--ocean)));
+    --gradient-hero: linear-gradient(135deg, hsl(var(--forest)), hsl(var(--ocean)));
+    
+    /* Shadows */
+    --shadow-soft: 0 4px 20px -4px hsl(var(--forest) / 0.1);
+    --shadow-nature: 0 8px 32px -8px hsl(var(--ocean) / 0.2);
+    
+    /* Animations */
+    --transition-smooth: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-bounce: all 0.6s cubic-bezier(0.68, -0.55, 0.265, 1.55);
 
     --radius: 0.5rem;
 
