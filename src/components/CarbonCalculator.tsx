@@ -9,76 +9,100 @@ import { Badge } from '@/components/ui/badge';
 import { Car, Plane, Home, Utensils, Calculator, Leaf } from 'lucide-react';
 
 interface CarbonData {
+  consumption: {
+    meatFrequency: string;
+    dailyDiet: string;
+    monthlyPackages: number;
+  };
+  environment: {
+    recycling: string;
+    renewableEnergy: string;
+    treePlanting: string;
+    lightsOff: string;
+    waterUsage: string;
+  };
   transportation: {
+    dailyTransport: string;
     carKm: number;
     publicTransportKm: number;
-    flightHours: number;
-  };
-  energy: {
-    electricityKwh: number;
-    naturalGasKwh: number;
-  };
-  lifestyle: {
-    dietType: string;
-    recyclingFrequency: string;
   };
 }
 
 const CarbonCalculator = () => {
   const [currentStep, setCurrentStep] = useState(0);
   const [carbonData, setCarbonData] = useState<CarbonData>({
-    transportation: { carKm: 0, publicTransportKm: 0, flightHours: 0 },
-    energy: { electricityKwh: 0, naturalGasKwh: 0 },
-    lifestyle: { dietType: '', recyclingFrequency: '' }
+    consumption: { meatFrequency: '', dailyDiet: '', monthlyPackages: 0 },
+    environment: { recycling: '', renewableEnergy: '', treePlanting: '', lightsOff: '', waterUsage: '' },
+    transportation: { dailyTransport: '', carKm: 0, publicTransportKm: 0 }
   });
   const [result, setResult] = useState<number | null>(null);
 
   const steps = [
-    { title: 'Ulaşım', icon: Car, description: 'Yıllık ulaşım alışkanlıklarınız' },
-    { title: 'Enerji', icon: Home, description: 'Ev ve enerji tüketiminiz' },
-    { title: 'Yaşam Tarzı', icon: Utensils, description: 'Beslenme ve geri dönüşüm' },
+    { title: 'Tüketim Alışkanlıkları', icon: Utensils, description: 'Beslenme ve kargo alışkanlıklarınız' },
+    { title: 'Çevre Bilinci', icon: Leaf, description: 'Geri dönüşüm ve çevre dostu davranışlarınız' },
+    { title: 'Ulaşım', icon: Car, description: 'Günlük ulaşım tercihleriniz' },
     { title: 'Sonuçlar', icon: Calculator, description: 'Karbon ayak iziniz' }
   ];
 
   // CO₂ emission factors (kg CO₂ per unit)
   const emissionFactors = {
-    carKm: 0.21,
-    publicTransportKm: 0.05,
-    flightHour: 90,
-    electricityKwh: 0.43,
-    naturalGasKwh: 0.19,
-    dietMultipliers: {
-      'yuksek-et': 1.5,
-      'orta-et': 1.2,
-      'az-et': 1.0,
-      'vejetaryen': 0.7,
-      'vegan': 0.5
+    // Meat consumption (weekly to annual kg CO₂)
+    meatFrequency: {
+      'gunluk': 1300,      // Daily meat consumption
+      '5-6-gun': 1100,     // 5-6 days per week
+      '3-4-gun': 800,      // 3-4 days per week
+      '1-2-gun': 500,      // 1-2 days per week
+      'hic': 200           // No meat (vegetarian/vegan)
     },
-    recyclingMultipliers: {
-      'hic': 1.2,
-      'az': 1.1,
-      'orta': 1.0,
-      'cok': 0.9
+    // Daily diet habits
+    dailyDiet: {
+      'fast-food': 500,     // Frequent fast food
+      'islenmis': 300,      // Processed foods
+      'evde': 150,          // Home cooked
+      'organik': 100        // Organic/local foods
+    },
+    // Monthly packages
+    packageEmission: 2.5,   // kg CO₂ per package
+    
+    // Environmental consciousness multipliers
+    recycling: { 'evet': 0.9, 'hayir': 1.1 },
+    renewableEnergy: { 'evet': 0.8, 'hayir': 1.2 },
+    treePlanting: { 'evet': 0.95, 'hayir': 1.0 },
+    lightsOff: { 'evet': 0.95, 'hayir': 1.05 },
+    waterUsage: { 'tasarruf': 0.9, 'normal': 1.0, 'fazla': 1.1 },
+    
+    // Transportation (daily to annual kg CO₂)
+    dailyTransport: {
+      'araba': 2200,        // Daily car use
+      'motosiklet': 1200,   // Motorcycle
+      'toplu-tasima': 800,  // Public transport
+      'bisiklet': 50,       // Bicycle
+      'yuru': 20            // Walking
     }
   };
 
   const calculateCarbonFootprint = () => {
-    const transportEmissions = 
-      carbonData.transportation.carKm * emissionFactors.carKm +
-      carbonData.transportation.publicTransportKm * emissionFactors.publicTransportKm +
-      carbonData.transportation.flightHours * emissionFactors.flightHour;
-
-    const energyEmissions = 
-      carbonData.energy.electricityKwh * emissionFactors.electricityKwh +
-      carbonData.energy.naturalGasKwh * emissionFactors.naturalGasKwh;
-
-    const baseFoodEmissions = 1500; // Base annual food emissions in kg CO₂
-    const dietMultiplier = emissionFactors.dietMultipliers[carbonData.lifestyle.dietType as keyof typeof emissionFactors.dietMultipliers] || 1;
-    const recyclingMultiplier = emissionFactors.recyclingMultipliers[carbonData.lifestyle.recyclingFrequency as keyof typeof emissionFactors.recyclingMultipliers] || 1;
+    // Consumption emissions
+    const meatEmissions = emissionFactors.meatFrequency[carbonData.consumption.meatFrequency as keyof typeof emissionFactors.meatFrequency] || 0;
+    const dietEmissions = emissionFactors.dailyDiet[carbonData.consumption.dailyDiet as keyof typeof emissionFactors.dailyDiet] || 0;
+    const packageEmissions = carbonData.consumption.monthlyPackages * 12 * emissionFactors.packageEmission;
     
-    const lifestyleEmissions = baseFoodEmissions * dietMultiplier * recyclingMultiplier;
-
-    const totalEmissions = transportEmissions + energyEmissions + lifestyleEmissions;
+    // Transportation emissions
+    const transportEmissions = emissionFactors.dailyTransport[carbonData.transportation.dailyTransport as keyof typeof emissionFactors.dailyTransport] || 0;
+    
+    // Calculate base emissions
+    const baseEmissions = meatEmissions + dietEmissions + packageEmissions + transportEmissions;
+    
+    // Apply environmental consciousness multipliers
+    const recyclingMultiplier = emissionFactors.recycling[carbonData.environment.recycling as keyof typeof emissionFactors.recycling] || 1;
+    const renewableMultiplier = emissionFactors.renewableEnergy[carbonData.environment.renewableEnergy as keyof typeof emissionFactors.renewableEnergy] || 1;
+    const treePlantingMultiplier = emissionFactors.treePlanting[carbonData.environment.treePlanting as keyof typeof emissionFactors.treePlanting] || 1;
+    const lightsMultiplier = emissionFactors.lightsOff[carbonData.environment.lightsOff as keyof typeof emissionFactors.lightsOff] || 1;
+    const waterMultiplier = emissionFactors.waterUsage[carbonData.environment.waterUsage as keyof typeof emissionFactors.waterUsage] || 1;
+    
+    const totalMultiplier = recyclingMultiplier * renewableMultiplier * treePlantingMultiplier * lightsMultiplier * waterMultiplier;
+    const totalEmissions = baseEmissions * totalMultiplier;
+    
     setResult(Math.round(totalEmissions));
   };
 
@@ -89,10 +113,15 @@ const CarbonCalculator = () => {
   };
 
   const getTips = () => [
-    'Toplu taşıma kullanarak yıllık 1-2 ton CO₂ tasarruf edebilirsiniz.',
-    'Enerji tasarruflu ampuller kullanarak elektrik tüketiminizi %10 azaltın.',
-    'Haftada 1-2 gün et tüketmeyerek karbon ayak izinizi %15 azaltabilirsiniz.',
-    'Geri dönüşümü artırarak yıllık 500 kg CO₂ tasarruf edebilirsiniz.'
+    'Haftada 2-3 gün et tüketmeyerek yıllık 500-800 kg CO₂ tasarruf edebilirsiniz.',
+    'Düzenli geri dönüşüm yaparak karbon ayak izinizi %10 azaltabilirsiniz.',
+    'Yenilenebilir enerji kullanarak emisyonlarınızı %20 düşürebilirsiniz.',
+    'Toplu taşımayı tercih ederek günlük 3-5 kg CO₂ tasarruf edebilirsiniz.',
+    'Organik ve yerel gıdalar tercih ederek beslenme kaynaklı emisyonları azaltın.',
+    'Su tasarrufu yaparak yıllık 200 kg CO₂ tasarruf edebilirsiniz.',
+    'Işık tasarrufu yaparak elektrik tüketiminizi %5-10 azaltın.',
+    'Ağaç dikme etkinliklerine katılarak doğaya katkıda bulunun.',
+    'Online alışverişi azaltarak kargo kaynaklı emisyonları düşürün.'
   ];
 
   const nextStep = () => {
@@ -113,9 +142,9 @@ const CarbonCalculator = () => {
   const resetCalculator = () => {
     setCurrentStep(0);
     setCarbonData({
-      transportation: { carKm: 0, publicTransportKm: 0, flightHours: 0 },
-      energy: { electricityKwh: 0, naturalGasKwh: 0 },
-      lifestyle: { dietType: '', recyclingFrequency: '' }
+      consumption: { meatFrequency: '', dailyDiet: '', monthlyPackages: 0 },
+      environment: { recycling: '', renewableEnergy: '', treePlanting: '', lightsOff: '', waterUsage: '' },
+      transportation: { dailyTransport: '', carKm: 0, publicTransportKm: 0 }
     });
     setResult(null);
   };
@@ -156,127 +185,195 @@ const CarbonCalculator = () => {
 
       <Card className="shadow-nature">
         <CardContent className="p-6">
-          {/* Transportation Step */}
+          {/* Consumption Habits Step */}
           {currentStep === 0 && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <Label htmlFor="car-km">Yıllık Araba Kullanımı (km)</Label>
-                  <Input
-                    id="car-km"
-                    type="number"
-                    placeholder="0"
-                    value={carbonData.transportation.carKm || ''}
-                    onChange={(e) => setCarbonData({
+                  <Label htmlFor="meat-frequency">Haftada ne sıklıkla et tüketiyorsunuz?</Label>
+                  <Select 
+                    value={carbonData.consumption.meatFrequency} 
+                    onValueChange={(value) => setCarbonData({
                       ...carbonData,
-                      transportation: { ...carbonData.transportation, carKm: Number(e.target.value) }
+                      consumption: { ...carbonData.consumption, meatFrequency: value }
                     })}
-                  />
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Et tüketim sıklığınızı seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="gunluk">Her gün</SelectItem>
+                      <SelectItem value="5-6-gun">Haftada 5-6 gün</SelectItem>
+                      <SelectItem value="3-4-gun">Haftada 3-4 gün</SelectItem>
+                      <SelectItem value="1-2-gun">Haftada 1-2 gün</SelectItem>
+                      <SelectItem value="hic">Hiç tüketmem</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
+                
                 <div className="space-y-2">
-                  <Label htmlFor="public-transport">Yıllık Toplu Taşıma (km)</Label>
-                  <Input
-                    id="public-transport"
-                    type="number"
-                    placeholder="0"
-                    value={carbonData.transportation.publicTransportKm || ''}
-                    onChange={(e) => setCarbonData({
+                  <Label htmlFor="daily-diet">Günlük beslenme alışkanlığınız nasıldır?</Label>
+                  <Select 
+                    value={carbonData.consumption.dailyDiet} 
+                    onValueChange={(value) => setCarbonData({
                       ...carbonData,
-                      transportation: { ...carbonData.transportation, publicTransportKm: Number(e.target.value) }
+                      consumption: { ...carbonData.consumption, dailyDiet: value }
                     })}
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label htmlFor="flights">Yıllık Uçuş Saati</Label>
-                  <Input
-                    id="flights"
-                    type="number"
-                    placeholder="0"
-                    value={carbonData.transportation.flightHours || ''}
-                    onChange={(e) => setCarbonData({
-                      ...carbonData,
-                      transportation: { ...carbonData.transportation, flightHours: Number(e.target.value) }
-                    })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Energy Step */}
-          {currentStep === 1 && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="electricity">Aylık Elektrik Tüketimi (kWh)</Label>
-                  <Input
-                    id="electricity"
-                    type="number"
-                    placeholder="0"
-                    value={carbonData.energy.electricityKwh || ''}
-                    onChange={(e) => setCarbonData({
-                      ...carbonData,
-                      energy: { ...carbonData.energy, electricityKwh: Number(e.target.value) * 12 }
-                    })}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="natural-gas">Aylık Doğal Gaz Tüketimi (kWh)</Label>
-                  <Input
-                    id="natural-gas"
-                    type="number"
-                    placeholder="0"
-                    value={carbonData.energy.naturalGasKwh || ''}
-                    onChange={(e) => setCarbonData({
-                      ...carbonData,
-                      energy: { ...carbonData.energy, naturalGasKwh: Number(e.target.value) * 12 }
-                    })}
-                  />
-                </div>
-              </div>
-            </div>
-          )}
-
-          {/* Lifestyle Step */}
-          {currentStep === 2 && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="space-y-2">
-                  <Label htmlFor="diet">Beslenme Tarzınız</Label>
-                  <Select value={carbonData.lifestyle.dietType} onValueChange={(value) => 
-                    setCarbonData({
-                      ...carbonData,
-                      lifestyle: { ...carbonData.lifestyle, dietType: value }
-                    })
-                  }>
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Beslenme tarzınızı seçin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="yuksek-et">Yoğun Et Tüketimi</SelectItem>
-                      <SelectItem value="orta-et">Orta Düzey Et</SelectItem>
-                      <SelectItem value="az-et">Az Et Tüketimi</SelectItem>
-                      <SelectItem value="vejetaryen">Vejetaryen</SelectItem>
-                      <SelectItem value="vegan">Vegan</SelectItem>
+                      <SelectItem value="fast-food">Çoğunlukla fast food</SelectItem>
+                      <SelectItem value="islenmis">İşlenmiş gıdalar</SelectItem>
+                      <SelectItem value="evde">Evde yapılan yemekler</SelectItem>
+                      <SelectItem value="organik">Organik/yerel gıdalar</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="recycling">Geri Dönüşüm Sıklığınız</Label>
-                  <Select value={carbonData.lifestyle.recyclingFrequency} onValueChange={(value) => 
-                    setCarbonData({
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="monthly-packages">Ayda kaç kargo alırsınız?</Label>
+                  <Input
+                    id="monthly-packages"
+                    type="number"
+                    placeholder="0"
+                    value={carbonData.consumption.monthlyPackages || ''}
+                    onChange={(e) => setCarbonData({
                       ...carbonData,
-                      lifestyle: { ...carbonData.lifestyle, recyclingFrequency: value }
-                    })
-                  }>
+                      consumption: { ...carbonData.consumption, monthlyPackages: Number(e.target.value) }
+                    })}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Environmental Consciousness Step */}
+          {currentStep === 1 && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="recycling">Geri dönüşüm yapıyor musunuz?</Label>
+                  <Select 
+                    value={carbonData.environment.recycling} 
+                    onValueChange={(value) => setCarbonData({
+                      ...carbonData,
+                      environment: { ...carbonData.environment, recycling: value }
+                    })}
+                  >
                     <SelectTrigger>
-                      <SelectValue placeholder="Geri dönüşüm sıklığını seçin" />
+                      <SelectValue placeholder="Geri dönüşüm durumunuzu seçin" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="hic">Hiç Yapmam</SelectItem>
-                      <SelectItem value="az">Nadiren</SelectItem>
-                      <SelectItem value="orta">Bazen</SelectItem>
-                      <SelectItem value="cok">Düzenli Olarak</SelectItem>
+                      <SelectItem value="evet">Evet, düzenli yapıyorum</SelectItem>
+                      <SelectItem value="hayir">Hayır, yapmıyorum</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="renewable-energy">Yenilenebilir enerji kaynakları kullanıyor musunuz?</Label>
+                  <Select 
+                    value={carbonData.environment.renewableEnergy} 
+                    onValueChange={(value) => setCarbonData({
+                      ...carbonData,
+                      environment: { ...carbonData.environment, renewableEnergy: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Yenilenebilir enerji kullanımınızı seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="evet">Evet, kullanıyorum</SelectItem>
+                      <SelectItem value="hayir">Hayır, kullanmıyorum</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="lights-off">Odadan çıktığında ışıklarını kapatır mısın?</Label>
+                  <Select 
+                    value={carbonData.environment.lightsOff} 
+                    onValueChange={(value) => setCarbonData({
+                      ...carbonData,
+                      environment: { ...carbonData.environment, lightsOff: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Işık kullanım alışkanlığınızı seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="evet">Evet, her zaman kapatırım</SelectItem>
+                      <SelectItem value="hayir">Hayır, genelde açık bırakırım</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="tree-planting">Ağaç dikme etkinliklerine katılır mısın?</Label>
+                  <Select 
+                    value={carbonData.environment.treePlanting} 
+                    onValueChange={(value) => setCarbonData({
+                      ...carbonData,
+                      environment: { ...carbonData.environment, treePlanting: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Ağaç dikme etkinliklerine katılımınızı seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="evet">Evet, katılıyorum</SelectItem>
+                      <SelectItem value="hayir">Hayır, katılmıyorum</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="water-usage">Su tüketimini nasıl sağlarsınız?</Label>
+                  <Select 
+                    value={carbonData.environment.waterUsage} 
+                    onValueChange={(value) => setCarbonData({
+                      ...carbonData,
+                      environment: { ...carbonData.environment, waterUsage: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Su kullanım alışkanlığınızı seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="tasarruf">Tasarruflu kullanırım</SelectItem>
+                      <SelectItem value="normal">Normal kullanırım</SelectItem>
+                      <SelectItem value="fazla">Fazla kullanırım</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Transportation Step */}
+          {currentStep === 2 && (
+            <div className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2 md:col-span-2">
+                  <Label htmlFor="daily-transport">Günlük ulaşımda hangi araçları kullanıyorsunuz?</Label>
+                  <Select 
+                    value={carbonData.transportation.dailyTransport} 
+                    onValueChange={(value) => setCarbonData({
+                      ...carbonData,
+                      transportation: { ...carbonData.transportation, dailyTransport: value }
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Ana ulaşım aracınızı seçin" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="araba">Araba</SelectItem>
+                      <SelectItem value="motosiklet">Motosiklet</SelectItem>
+                      <SelectItem value="toplu-tasima">Toplu Taşıma</SelectItem>
+                      <SelectItem value="bisiklet">Bisiklet</SelectItem>
+                      <SelectItem value="yuru">Yürüyüş</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -311,8 +408,8 @@ const CarbonCalculator = () => {
               <Separator />
 
               <div className="text-left space-y-4">
-                <h4 className="text-lg font-semibold text-foreground mb-3">Azaltma Önerileri:</h4>
-                <div className="grid gap-3">
+                <h4 className="text-lg font-semibold text-foreground mb-3">Kişiselleştirilmiş Öneriler:</h4>
+                <div className="grid gap-3 max-h-64 overflow-y-auto">
                   {getTips().map((tip, index) => (
                     <div key={index} className="flex items-start gap-3 p-3 bg-muted rounded-lg">
                       <Leaf className="w-5 h-5 text-leaf mt-0.5 flex-shrink-0" />
